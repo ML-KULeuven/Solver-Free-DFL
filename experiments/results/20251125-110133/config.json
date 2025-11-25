@@ -1,0 +1,64 @@
+{
+    "benchmark": "random_lp",
+    "use_new_generation_method": false,
+    "add_variable_upper_bounds": false,
+    "num_vars": 100,
+    "num_constrs": 50,
+    "num_data": 500,
+    "num_feat": 5,
+    "deg": 8,
+    "e": 0,
+    "seeds": [
+        0
+    ],
+    "model": "linear",
+    "batch_size": 32,
+    "num_epochs": 5,
+    "log_every_n_epochs": 10,
+    "experiments": [
+        {
+            "name": "MSE",
+            "method": "mse",
+            "hyperparameters": {},
+            "learning_rate": 0.01
+        },
+        {
+            "name": "SPO+",
+            "method": "spo_plus",
+            "hyperparameters": {},
+            "learning_rate": 0.01
+        },
+        {
+            "name": "PFYL",
+            "method": "pfyl",
+            "hyperparameters": {
+                "sigma": 0.1
+            },
+            "learning_rate": 0.01
+        },
+        {
+            "name": "NCE",
+            "method": "nce",
+            "hyperparameters": {
+                "solve_ratio": 0.05
+            },
+            "learning_rate": 0.01
+        },
+        {
+            "name": "CaVE",
+            "method": "exact_cave",
+            "hyperparameters": {
+                "solver": "clarabel"
+            },
+            "learning_rate": 0.01
+        },
+        {
+            "name": "LAVA",
+            "method": "lava",
+            "hyperparameters": {
+                "threshold": -0.1
+            },
+            "learning_rate": 0.01
+        }
+    ]
+}

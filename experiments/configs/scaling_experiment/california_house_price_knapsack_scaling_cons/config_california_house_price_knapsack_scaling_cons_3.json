@@ -1,0 +1,59 @@
+{
+    "benchmark": "california_house_price_knapsack",
+    "num_items": 100,
+    "num_data": 500,
+    "dims": 4,
+    "deg": 8,
+    "e": 0.0,
+    "seeds": [0, 1, 2],
+    "model": "shared",
+    "num_epochs": 100000,
+    "batch_size": 32,
+    "log_every_n_epochs": 10,
+    "experiments": [
+        {
+            "name": "CaVE",
+            "method": "inner_cave",
+            "hyperparameters": {
+                "solver": "clarabel"
+            },
+            "learning_rate": 0.01
+        },
+        {
+            "name": "MSE",
+            "method": "mse",
+            "hyperparameters": {},
+            "learning_rate": 0.01
+        },
+        {
+            "name": "SPO+",
+            "method": "spo_plus",
+            "hyperparameters": {},
+            "learning_rate": 0.01
+        },
+        {
+            "name": "PFYL",
+            "method": "pfyl",
+            "hyperparameters": {
+                "sigma": 1
+            },
+            "learning_rate": 0.01
+        },
+        {
+            "name": "NCE",
+            "method": "nce",
+            "hyperparameters": {
+                "solve_ratio": 0.05
+            },
+            "learning_rate": 0.01
+        },
+        {
+            "name": "LAVA",
+            "method": "lava",
+            "hyperparameters": {
+                "threshold": -0.1
+            },
+            "learning_rate": 0.01
+        }
+    ]
+} 
