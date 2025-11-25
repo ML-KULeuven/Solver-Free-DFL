@@ -7,7 +7,7 @@ This repository contains the code accompanying our NeurIPS 2025 paper on Solver-
 The repository contains all data generators, loss functions, and experiment scripts used in the paper.
 
 - `experiments/` – main experiment script, along with configuration files used in the paper.
-- `architectures/` – PyTorch models used to predict cost predictions.
+- `architectures/` – PyTorch models used to predict cost coefficients.
 - `data/` – data generators, including code for precomputation of adjacent vertices.
 - `methods/` – implementations of losses not included in PyEPO (LAVA and CaVE).
 - `optimization_problems/` – Gurobi implementations of random LP, shortest path, and knapsack instances.
@@ -51,8 +51,6 @@ Adjust `--config` to point to any file under `experiments/configs/**`.
 
 
 ## Citation
-**Cite as:**
-
 ```
 @article{berden2025solver,
   title={Solver-Free Decision-Focused Learning for Linear Optimization Problems},
