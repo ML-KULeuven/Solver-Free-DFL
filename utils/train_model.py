@@ -40,7 +40,7 @@ def train_model(reg, optmodel, method, num_epochs=100, lr=0.001, train_dataloade
     loss_func = create_loss_func(method, optmodel, hyperparameters, train_dataloader.dataset)
     train_time = 0
 
-    if "adjacent_vertices" in method:
+    if method == "lava":
         train_time += adj_vert_computation_time
 
     # Track best model state

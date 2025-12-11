@@ -249,3 +249,7 @@ http-client.private.env.json
 
 # PyPI configuration file
 .pypirc
+.idea/vcs.xml
+.idea/Solver-Free-DFL.iml
+.idea/inspectionProfiles/Project_Default.xml
+.idea/inspectionProfiles/profiles_settings.xml
