@@ -107,7 +107,7 @@ class optDatasetAugmented(optDataset):
                 np.array(relaxed_sols),
                 np.array(relaxed_objs),
                 ctrs,
-                np.array(adjacent_verts),
+                adjacent_verts,
                 adj_vert_computation_time)
 
     def _solve(self, cost):
