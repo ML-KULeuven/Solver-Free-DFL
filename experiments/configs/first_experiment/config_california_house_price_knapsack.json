@@ -1,6 +1,6 @@
 {
     "benchmark": "california_house_price_knapsack",
-    "num_items": 600,
+    "num_items": 150,
     "num_data": 500,
     "dims": 5,
     "deg": 8,

@@ -23,9 +23,9 @@ def generate_california_house_prices_mapping(n_train=500, n_val=250, n_test=250,
 
     # Standardize features separately for train and test
     s_scaler = StandardScaler()
-    features_train = s_scaler.fit_transform(features_train.astype(np.float))
-    features_val = s_scaler.transform(features_val.astype(np.float))
-    features_test = s_scaler.transform(features_test.astype(np.float))
+    features_train = s_scaler.fit_transform(features_train.astype(np.float64))
+    features_val = s_scaler.transform(features_val.astype(np.float64))
+    features_test = s_scaler.transform(features_test.astype(np.float64))
 
     def create_instances(features, targets, n_instances, num_houses_per_instance):
         # Calculate how many houses we need
