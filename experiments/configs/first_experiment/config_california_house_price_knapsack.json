@@ -5,7 +5,7 @@
     "dims": 5,
     "deg": 8,
     "e": 0.0,
-    "seeds": [0],
+    "seeds": [0, 1, 2, 3, 4],
     "model": "shared",
     "num_epochs": 100000,
     "batch_size": 32,

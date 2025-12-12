@@ -2,6 +2,7 @@ import time
 import gurobipy as gp
 from gurobipy import GRB
 import numpy as np
+import scipy
 import torch
 from pyepo.model.grb.tsp import tspABModel, tspMTZModel
 from torch.nn.utils.rnn import pad_sequence
@@ -70,7 +71,7 @@ class optDatasetAugmented(optDataset):
 
             # Create cache key from solution
             cache_key = tuple(sol)
-            
+
             # Check cache for adjacent vertices
             if cache_key in adjacent_vertices_cache:
                 adjacent_vertices = adjacent_vertices_cache[cache_key]
@@ -190,13 +191,16 @@ class optDatasetAugmented(optDataset):
 
         sigma = np.sum(sol[basic_indices] < 1e-10)
 
+        use_scipy = True
+
         if sigma == 0:
             # Non-degenerate vertex
-            return get_adjacent_vertices_non_degenerate_case(A, basic_indices, non_basic_indices, sol)
+            return get_adjacent_vertices_non_degenerate_case(A, basic_indices, non_basic_indices, sol, use_scipy)
         else:
             # Degenerate vertex; use lexicographic pivoting or TNP rule
-            use_tnp_rule = False
-            return get_adjacent_vertices_degenerate_case(A, basic_indices, non_basic_indices, sol, use_tnp_rule)
+            use_tnp_rule = True
+            return get_adjacent_vertices_degenerate_case(A, basic_indices, non_basic_indices, sol, use_scipy,
+                                                         use_tnp_rule)
 
     def __len__(self):
         """
@@ -241,9 +245,17 @@ def collate_fn_2(batch):
     return x, c, w, z, w_rel, z_rel, ctrs_padded, adjacent_verts_padded
 
 
-def get_adjacent_vertices_non_degenerate_case(A, basic_indices, non_basic_indices, sol):
+def get_adjacent_vertices_non_degenerate_case(A, basic_indices, non_basic_indices, sol, use_scipy):
     A_basic = A[:, basic_indices]
-    dirs = np.linalg.solve(-A_basic, A[:, non_basic_indices])
+
+    # Depending on your setup and package versions (as well as the size of the matrices), SciPy may perform orders
+    # of magnitude faster than NumPy, or vice versa. In case you experience long computation, try changing the
+    # package used for solving the system
+    if use_scipy:
+        dirs = scipy.linalg.solve(-A_basic, A[:, non_basic_indices])
+    else:
+        dirs = np.linalg.solve(-A_basic, A[:, non_basic_indices])
+
     basic_var_values = sol[basic_indices]
 
     adjacent_vertices = []
@@ -266,7 +278,7 @@ def get_adjacent_vertices_non_degenerate_case(A, basic_indices, non_basic_indice
     return adjacent_vertices
 
 
-def get_adjacent_vertices_degenerate_case(A, basic_indices, non_basic_indices, sol, use_tnp_rule):
+def get_adjacent_vertices_degenerate_case(A, basic_indices, non_basic_indices, sol, use_scipy, use_tnp_rule):
     basic_indices = np.array(sorted(basic_indices))
     non_basic_indices = np.array(sorted(non_basic_indices))
 
@@ -276,7 +288,15 @@ def get_adjacent_vertices_degenerate_case(A, basic_indices, non_basic_indices, s
         A_basic = A[:, basic_indices]
         basic_var_values = sol[basic_indices]
         A_non_basic = A[:, non_basic_indices]
-        dirs = np.linalg.solve(A_basic, A_non_basic)
+
+        # Depending on your setup and package versions (as well as the size of the matrices), SciPy may perform orders
+        # of magnitude faster than NumPy, or vice versa. In case you experience long computation, try changing the
+        # package used for solving the system
+        if use_scipy:
+            dirs = scipy.linalg.solve(A_basic, A_non_basic)
+        else:
+            dirs = np.linalg.solve(A_basic, A_non_basic)
+
         indices_basic_var_zero = np.where(basic_var_values == 0)[0]
         dirs_indices_basic_var_zero = dirs[indices_basic_var_zero, :]
         indices_transition_columns = np.where(np.all(dirs_indices_basic_var_zero <= 0, axis=0))[0]
@@ -298,7 +318,15 @@ def get_adjacent_vertices_degenerate_case(A, basic_indices, non_basic_indices, s
         if cols is not None:
             basic_indices_2 = cols
             B_hat = -A[:, basic_indices_2]
-            B_hat_prime = np.linalg.solve(B, B_hat)
+
+            # Depending on your setup and package versions (as well as the size of the matrices), SciPy may perform orders
+            # of magnitude faster than NumPy, or vice versa. In case you experience long computation, try changing the
+            # package used for solving the system
+            if use_scipy:
+                B_hat_prime = scipy.linalg.solve(B, B_hat)
+            else:
+                B_hat_prime = np.linalg.solve(B, B_hat)
+
             B_inv_L = np.concatenate([np.expand_dims(x_B, axis=1), B_hat_prime], axis=1)
             # B_inv_L needs to be lexicofeasible for TNP rule to work
             assert is_lexicofeasible(B_inv_L)
@@ -315,14 +343,14 @@ def get_adjacent_vertices_degenerate_case(A, basic_indices, non_basic_indices, s
     iteration = 0
     while queue:
         iteration += 1
-        ## Early stopping if desired:
-        # if iteration > 250:
-        #     break
+        # Early stopping if desired:
+        if iteration > 250:
+            break
         curr_basic_indices, curr_non_basic_indices = queue.pop(0)
 
         # Find adjacent vertices for current solution
         adjacent_vertices, new_basic_indices_list, new_non_basic_indices_list = get_adjacent_vertices_degenerate_case_helper(
-            A, curr_basic_indices, curr_non_basic_indices, sol, t, B_hat
+            A, curr_basic_indices, curr_non_basic_indices, sol, t, B_hat, use_scipy
         )
 
         for adjacent_vertex in adjacent_vertices:
@@ -338,12 +366,22 @@ def get_adjacent_vertices_degenerate_case(A, basic_indices, non_basic_indices, s
     return all_adjacent_vertices
 
 
-def get_adjacent_vertices_degenerate_case_helper(A, basic_indices, non_basic_indices, sol, t, B_hat):
+def get_adjacent_vertices_degenerate_case_helper(A, basic_indices, non_basic_indices, sol, t, B_hat, use_scipy):
     A_basic = A[:, basic_indices]
-    B_hat_prime = np.linalg.solve(A_basic, B_hat)
+
+    if use_scipy:
+        B_hat_prime = scipy.linalg.solve(A_basic, B_hat)
+    else:
+        B_hat_prime = np.linalg.solve(A_basic, B_hat)
+
     basic_var_values = sol[basic_indices]
     A_non_basic = A[:, non_basic_indices]
-    dirs = np.linalg.solve(A_basic, A_non_basic)
+
+    if use_scipy:
+        dirs = scipy.linalg.solve(A_basic, A_non_basic)
+    else:
+        dirs = np.linalg.solve(A_basic, A_non_basic)
+
     t_index = np.where(non_basic_indices == t)[0]
     x_B = sol[basic_indices]
 
